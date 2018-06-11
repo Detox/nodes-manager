@@ -6,9 +6,11 @@
  */
 (function(){
   function Wrapper(detoxUtils, asyncEventer){
+    var ArrayMap, ArraySet;
+    ArrayMap = detoxUtils['ArrayMap'];
+    ArraySet = detoxUtils['ArraySet'];
     /**
      * @constructor
-     *
      *
      * @return {!Manager}
      */
@@ -17,7 +19,69 @@
         return new Manager();
       }
       asyncEventer.call(this);
+      this._bootstrap_nodes = ArrayMap();
+      this._used_first_nodes = ArraySet();
+      this._connected_nodes = ArraySet();
+      this._peers = ArraySet();
+      this._aware_of_nodes = ArrayMap();
     }
+    Manager.prototype = {
+      /**
+       * @param {string} bootstrap_node
+       */
+      'add_bootstrap_node': function(bootstrap_node){
+        var bootstrap_node_id;
+        bootstrap_node_id = hex2array(bootstrap_node.split(':')[0]);
+        this._bootstrap_nodes_ids.set(bootstrap_node_id, bootstrap_node);
+      }
+      /**
+       * @param {!Uint8Array} node_id
+       */,
+      'add_connected_node': function(node_id){
+        this._connected_nodes.add(node_id);
+        this._aware_of_nodes['delete'](node_id);
+        this['fire']('connected_nodes_count', this._connected_nodes.size);
+        this['fire']('aware_of_nodes_count', this._aware_of_nodes.size);
+      }
+      /**
+       * @param {!Uint8Array} node_id
+       */,
+      'del_connected_node': function(node_id){
+        this._connected_nodes['delete'](node_id);
+        this._peers['delete'](node_id);
+        this['fire']('connected_nodes_count', this._connected_nodes.size);
+      }
+      /**
+       * @param {!Uint8Array}			peer_id
+       * @param {!Array<!Uint8Array>}	peer_peers
+       */,
+      'add_peer': function(peer_id, peer_peers){
+        this._peers.add(peer_id);
+      }
+      /**
+       * @param {!Uint8Array}			node_id	Source node ID
+       * @param {!Array<!Uint8Array>}	nodes	IDs of nodes `node_id` is aware of
+       */,
+      'set_aware_of_nodes': function(node_id, nodes){}
+      /**
+       * @return {!Array<!Uint8Array>}
+       */,
+      'get_aware_of_nodes': function(){}
+      /**
+       * @return {boolean}
+       */,
+      'has_stale_aware_of_nodes': function(){}
+      /**
+       * @return {!Array<!Uint8Array>}
+       */,
+      'get_stale_aware_of_nodes': function(){}
+      /**
+       * @param {number}	number_of_nodes
+       *
+       * @return {Array<!Uint8Array>} `null` if there was not enough nodes
+       */,
+      'get_nodes_for_routing_path': function(number_of_nodes){}
+    };
     Manager.prototype = Object.assign(Object.create(asyncEventer.prototype), Manager.prototype);
     Object.defineProperty(Manager.prototype, 'constructor', {
       value: Manager
