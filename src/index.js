@@ -16,19 +16,22 @@
     /**
      * @constructor
      *
-     * @param {!Array<string>}			bootstrap_nodes		Array of strings in format `node_id:address:port`
-     * @param {!Object<string, number>}	timeouts			Various timeouts and intervals used internally
+     * @param {!Array<string>}			bootstrap_nodes			Array of strings in format `node_id:address:port`
+     * @param {!Array<string>}			aware_of_nodes_limit	How many aware of nodes should be kept in memory
+     * @param {!Object<string, number>}	timeouts				Various timeouts and intervals used internally
      *
      * @return {!Manager}
      */
-    function Manager(bootstrap_nodes, timeouts){
+    function Manager(bootstrap_nodes, aware_of_nodes_limit, timeouts){
       var this$ = this;
+      aware_of_nodes_limit == null && (aware_of_nodes_limit = 1000);
       timeouts == null && (timeouts = {});
       if (!(this instanceof Manager)) {
-        return new Manager(bootstrap_nodes, timeouts);
+        return new Manager(bootstrap_nodes, aware_of_nodes_limit, timeouts);
       }
       asyncEventer.call(this);
       this._timeouts = Object.assign({}, DEFAULT_TIMEOUTS, timeouts);
+      this._aware_of_nodes_limit = aware_of_nodes_limit;
       this._bootstrap_nodes = ArrayMap(bootstrap_nodes);
       this._bootstrap_nodes_ids = ArrayMap();
       this._used_first_nodes = ArraySet();
@@ -126,6 +129,33 @@
        * @return {!Array<!Uint8Array>}
        */,
       'get_aware_of_nodes': function(){}
+      /**
+       * @return {boolean}
+       */,
+      'more_aware_of_nodes_needed': function(){
+        return Boolean(this._aware_of_nodes.size < this._aware_of_nodes_limit || this._get_stale_aware_of_nodes(true).length);
+      }
+      /**
+       * @param {boolean=} early_exit Will return single node if present, used to check if stale nodes are present at all
+       *
+       * @return {!Array<!Uint8Array>}
+       */,
+      _get_stale_aware_of_nodes: function(early_exit){
+        var stale_aware_of_nodes, stale_older_than, exited;
+        early_exit == null && (early_exit = false);
+        stale_aware_of_nodes = [];
+        stale_older_than = +new Date - this._timeouts['STALE_AWARE_OF_NODE_TIMEOUT'] * 1000;
+        exited = false;
+        this._aware_of_nodes.forEach(function(date, node_id){
+          if (!exited && date < stale_older_than) {
+            stale_aware_of_nodes.push(node_id);
+            if (early_exit && !exited) {
+              exited = true;
+            }
+          }
+        });
+        return stale_aware_of_nodes;
+      }
       /**
        * @param {number}	number_of_nodes
        *

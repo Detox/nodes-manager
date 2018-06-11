@@ -13,17 +13,19 @@ function Wrapper (detox-utils, async-eventer)
 	/**
 	 * @constructor
 	 *
-	 * @param {!Array<string>}			bootstrap_nodes		Array of strings in format `node_id:address:port`
-	 * @param {!Object<string, number>}	timeouts			Various timeouts and intervals used internally
+	 * @param {!Array<string>}			bootstrap_nodes			Array of strings in format `node_id:address:port`
+	 * @param {!Array<string>}			aware_of_nodes_limit	How many aware of nodes should be kept in memory
+	 * @param {!Object<string, number>}	timeouts				Various timeouts and intervals used internally
 	 *
 	 * @return {!Manager}
 	 */
-	!function Manager (bootstrap_nodes, timeouts = {}) #TODO If there are not many timeouts, think about simplifying to plain arguments
+	!function Manager (bootstrap_nodes, aware_of_nodes_limit = 1000, timeouts = {}) #TODO If there are not many timeouts, think about simplifying to plain arguments
 		if !(@ instanceof Manager)
-			return new Manager(bootstrap_nodes, timeouts)
+			return new Manager(bootstrap_nodes, aware_of_nodes_limit, timeouts)
 		async-eventer.call(@)
 
 		@_timeouts				= Object.assign({}, DEFAULT_TIMEOUTS, timeouts)
+		@_aware_of_nodes_limit	= aware_of_nodes_limit
 
 		# TODO: Limit number of stored bootstrap nodes
 		@_bootstrap_nodes		= ArrayMap(bootstrap_nodes)
@@ -118,6 +120,26 @@ function Wrapper (detox-utils, async-eventer)
 		 */
 		'get_aware_of_nodes' : ->
 			# TODO: Implement
+		/**
+		 * @return {boolean}
+		 */
+		'more_aware_of_nodes_needed' : ->
+			Boolean(@_aware_of_nodes.size < @_aware_of_nodes_limit || @_get_stale_aware_of_nodes(true).length) # TODO: _get_stale_aware_of_nodes not implemented
+		/**
+		 * @param {boolean=} early_exit Will return single node if present, used to check if stale nodes are present at all
+		 *
+		 * @return {!Array<!Uint8Array>}
+		 */
+		_get_stale_aware_of_nodes : (early_exit = false) ->
+			stale_aware_of_nodes	= []
+			stale_older_than		= +(new Date) - @_timeouts['STALE_AWARE_OF_NODE_TIMEOUT'] * 1000
+			exited					= false
+			@_aware_of_nodes.forEach (date, node_id) !->
+				if !exited && date < stale_older_than
+					stale_aware_of_nodes.push(node_id)
+					if early_exit && !exited
+						exited	:= true
+			stale_aware_of_nodes
 		/**
 		 * @param {number}	number_of_nodes
 		 *
