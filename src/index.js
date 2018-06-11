@@ -143,7 +143,7 @@
        * @return {boolean}
        */,
       'has_connected_node': function(node_id){
-        return this._connected_nodes.has(peer_peer_id);
+        return this._connected_nodes.has(node_id);
       }
       /**
        * @param {!Uint8Array} node_id
@@ -286,7 +286,7 @@
        * @param {!Uint8Array} node_id
        */,
       'del_first_node_in_routing_path': function(node_id){
-        this._used_first_nodes['delete'](first_node);
+        this._used_first_nodes['delete'](node_id);
       },
       'destroy': function(){
         if (this._destroyed) {

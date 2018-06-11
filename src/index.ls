@@ -126,7 +126,7 @@ function Wrapper (detox-utils, async-eventer)
 		 * @return {boolean}
 		 */
 		'has_connected_node' : (node_id) ->
-			@_connected_nodes.has(peer_peer_id)
+			@_connected_nodes.has(node_id)
 		/**
 		 * @param {!Uint8Array} node_id
 		 */
@@ -238,7 +238,7 @@ function Wrapper (detox-utils, async-eventer)
 		 * @param {!Uint8Array} node_id
 		 */
 		'del_first_node_in_routing_path' : (node_id) !->
-			@_used_first_nodes.delete(first_node)
+			@_used_first_nodes.delete(node_id)
 		'destroy' : !->
 			if @_destroyed
 				return
