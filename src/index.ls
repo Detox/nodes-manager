@@ -21,7 +21,7 @@ function Wrapper (detox-utils, async-eventer)
 	 */
 	!function Manager (bootstrap_nodes, aware_of_nodes_limit = 1000, stale_aware_of_node_timeout = STALE_AWARE_OF_NODE_TIMEOUT) #TODO If there are not many timeouts, think about simplifying to plain arguments
 		if !(@ instanceof Manager)
-			return new Manager(bootstrap_nodes, aware_of_nodes_limit, timeouts)
+			return new Manager(bootstrap_nodes, aware_of_nodes_limit, stale_aware_of_node_timeout)
 		async-eventer.call(@)
 
 		@_timeouts						= Object.assign({}, DEFAULT_TIMEOUTS, timeouts)

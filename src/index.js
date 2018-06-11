@@ -26,7 +26,7 @@
       aware_of_nodes_limit == null && (aware_of_nodes_limit = 1000);
       stale_aware_of_node_timeout == null && (stale_aware_of_node_timeout = STALE_AWARE_OF_NODE_TIMEOUT);
       if (!(this instanceof Manager)) {
-        return new Manager(bootstrap_nodes, aware_of_nodes_limit, timeouts);
+        return new Manager(bootstrap_nodes, aware_of_nodes_limit, stale_aware_of_node_timeout);
       }
       asyncEventer.call(this);
       this._timeouts = Object.assign({}, DEFAULT_TIMEOUTS, timeouts);
