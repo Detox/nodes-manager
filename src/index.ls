@@ -150,7 +150,7 @@ function Wrapper (detox-utils, async-eventer)
 		 * @return {!Array<!Uint8Array>}
 		 */
 		'get_aware_of_nodes' : ->
-			# TODO: Rewrite completely, return peers of peers who are not our peers yet
+			# TODO: Rewrite completely, return peers of peers and aware of nodes that are not our own peers yet
 			nodes	= @_get_random_connected_nodes(7) || []
 			nodes	= nodes.concat(@_get_random_aware_of_nodes(10 - nodes.length) || [])
 			nodes
@@ -158,7 +158,7 @@ function Wrapper (detox-utils, async-eventer)
 		 * @return {boolean}
 		 */
 		'more_aware_of_nodes_needed' : ->
-			Boolean(@_aware_of_nodes.size < @_aware_of_nodes_limit || @_get_stale_aware_of_nodes(true).length) # TODO: _get_stale_aware_of_nodes not implemented
+			Boolean(@_aware_of_nodes.size < @_aware_of_nodes_limit || @_get_stale_aware_of_nodes(true).length)
 		/**
 		 * @param {boolean=} early_exit Will return single node if present, used to check if stale nodes are present at all
 		 *
