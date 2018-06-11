@@ -35,6 +35,22 @@
         this._bootstrap_nodes_ids.set(bootstrap_node_id, bootstrap_node);
       }
       /**
+       * @param {!Array<!Uint8Array>} exclude_nodes
+       *
+       * @return {!Array<!Uint8Array>}
+       */,
+      'get_candidates_for_disconnection': function(exclude_nodes){
+        var candidates, this$ = this;
+        exclude_nodes = ArraySet(exclude_nodes);
+        candidates = [];
+        this._connected_nodes.forEach(function(node_id){
+          if (!(exclude_nodes.has(node_id), this$._used_first_nodes.has(node_id) || this$._peers.has(node_id))) {
+            candidates.push(node_id);
+          }
+        });
+        return candidates;
+      }
+      /**
        * @param {!Uint8Array} node_id
        */,
       'add_connected_node': function(node_id){
@@ -42,6 +58,14 @@
         this._aware_of_nodes['delete'](node_id);
         this['fire']('connected_nodes_count', this._connected_nodes.size);
         this['fire']('aware_of_nodes_count', this._aware_of_nodes.size);
+      }
+      /**
+       * @param {!Uint8Array} node_id
+       *
+       * @return {boolean}
+       */,
+      'has_connected_node': function(node_id){
+        return this._connected_nodes.has(peer_peer_id);
       }
       /**
        * @param {!Uint8Array} node_id
@@ -56,17 +80,20 @@
        * @param {!Array<!Uint8Array>}	peer_peers
        */,
       'add_peer': function(peer_id, peer_peers){
+        var i$, len$, peer_peer_id;
         this._peers.add(peer_id);
+        for (i$ = 0, len$ = peer_peers.length; i$ < len$; ++i$) {
+          peer_peer_id = peer_peers[i$];
+          if (!this._connected_nodes.has(peer_peer_id)) {
+            this._aware_of_nodes.set(peer_peer_id, +new Date);
+          }
+        }
       }
       /**
        * @param {!Uint8Array}			node_id	Source node ID
        * @param {!Array<!Uint8Array>}	nodes	IDs of nodes `node_id` is aware of
        */,
       'set_aware_of_nodes': function(node_id, nodes){}
-      /**
-       * @return {!Array<!Uint8Array>}
-       */,
-      'get_aware_of_nodes': function(){}
       /**
        * @return {boolean}
        */,
@@ -80,7 +107,16 @@
        *
        * @return {Array<!Uint8Array>} `null` if there was not enough nodes
        */,
-      'get_nodes_for_routing_path': function(number_of_nodes){}
+      'get_nodes_for_routing_path': function(number_of_nodes){},
+      'del_first_node_in_routing_path': function(node_id){
+        this._used_first_nodes['delete'](first_node);
+      },
+      'destroy': function(){
+        if (this._destroyed) {
+          return;
+        }
+        this._destroyed = true;
+      }
     };
     Manager.prototype = Object.assign(Object.create(asyncEventer.prototype), Manager.prototype);
     Object.defineProperty(Manager.prototype, 'constructor', {
