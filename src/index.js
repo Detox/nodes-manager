@@ -10,7 +10,8 @@
     'STALE_AWARE_OF_NODE_TIMEOUT': 5 * 60
   };
   function Wrapper(detoxUtils, asyncEventer){
-    var ArrayMap, ArraySet;
+    var pull_random_item_from_array, ArrayMap, ArraySet;
+    pull_random_item_from_array = detoxUtils['pull_random_item_from_array'];
     ArrayMap = detoxUtils['ArrayMap'];
     ArraySet = detoxUtils['ArraySet'];
     /**
@@ -89,6 +90,47 @@
         this._aware_of_nodes['delete'](node_id);
         this['fire']('connected_nodes_count', this._connected_nodes.size);
         this['fire']('aware_of_nodes_count', this._aware_of_nodes.size);
+      }
+      /**
+       * Get some random nodes from already connected nodes
+       *
+       * @param {number}	up_to_number_of_nodes
+       *
+       * @return {Array<!Uint8Array>} `null` if there is no nodes to return
+       */,
+      'get_random_connected_nodes': function(up_to_number_of_nodes){
+        return this._get_random_connected_nodes(up_to_number_of_nodes);
+      }
+      /**
+       * Get some random nodes from already connected nodes
+       *
+       * @param {number=}					up_to_number_of_nodes
+       * @param {!Array<!Uint8Array>=}	exclude_nodes
+       *
+       * @return {Array<!Uint8Array>} `null` if there is no nodes to return
+       */,
+      _get_random_connected_nodes: function(up_to_number_of_nodes, exclude_nodes){
+        var connected_nodes, exclude_nodes_set, i$, i, results$ = [];
+        up_to_number_of_nodes == null && (up_to_number_of_nodes = 1);
+        exclude_nodes == null && (exclude_nodes = []);
+        if (!this._connected_nodes.size) {
+          return null;
+        }
+        connected_nodes = Array.from(this._connected_nodes.values());
+        exclude_nodes_set = ArraySet(exclude_nodes.concat(Array.from(this._bootstrap_nodes_ids.keys())));
+        connected_nodes = connected_nodes.filter(function(node){
+          return !exclude_nodes_set.has(node);
+        });
+        if (!connected_nodes.length) {
+          return null;
+        }
+        for (i$ = 0; i$ < up_to_number_of_nodes; ++i$) {
+          i = i$;
+          if (connected_nodes.length) {
+            results$.push(pull_random_item_from_array(connected_nodes));
+          }
+        }
+        return results$;
       }
       /**
        * @param {!Uint8Array} node_id

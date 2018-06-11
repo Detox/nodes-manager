@@ -8,8 +8,9 @@ const DEFAULT_TIMEOUTS	=
 	'STALE_AWARE_OF_NODE_TIMEOUT'	: 5 * 60
 
 function Wrapper (detox-utils, async-eventer)
-	ArrayMap	= detox-utils['ArrayMap']
-	ArraySet	= detox-utils['ArraySet']
+	pull_random_item_from_array	= detox-utils['pull_random_item_from_array']
+	ArrayMap					= detox-utils['ArrayMap']
+	ArraySet					= detox-utils['ArraySet']
 	/**
 	 * @constructor
 	 *
@@ -85,6 +86,36 @@ function Wrapper (detox-utils, async-eventer)
 			@_aware_of_nodes.delete(node_id)
 			@'fire'('connected_nodes_count', @_connected_nodes.size)
 			@'fire'('aware_of_nodes_count', @_aware_of_nodes.size)
+		/**
+		 * Get some random nodes from already connected nodes
+		 *
+		 * @param {number}	up_to_number_of_nodes
+		 *
+		 * @return {Array<!Uint8Array>} `null` if there is no nodes to return
+		 */
+		'get_random_connected_nodes' : (up_to_number_of_nodes) ->
+			@_get_random_connected_nodes(up_to_number_of_nodes)
+		/**
+		 * Get some random nodes from already connected nodes
+		 *
+		 * @param {number=}					up_to_number_of_nodes
+		 * @param {!Array<!Uint8Array>=}	exclude_nodes
+		 *
+		 * @return {Array<!Uint8Array>} `null` if there is no nodes to return
+		 */
+		_get_random_connected_nodes : (up_to_number_of_nodes = 1, exclude_nodes = []) ->
+			# TODO: Some trust model, only return trusted nodes
+			if !@_connected_nodes.size
+				return null
+			connected_nodes		= Array.from(@_connected_nodes.values())
+			exclude_nodes_set	= ArraySet(exclude_nodes.concat(Array.from(@_bootstrap_nodes_ids.keys())))
+			connected_nodes		= connected_nodes.filter (node) ->
+				!exclude_nodes_set.has(node)
+			if !connected_nodes.length
+				return null
+			for i from 0 til up_to_number_of_nodes
+				if connected_nodes.length
+					pull_random_item_from_array(connected_nodes)
 		/**
 		 * @param {!Uint8Array} node_id
 		 *
