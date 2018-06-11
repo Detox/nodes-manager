@@ -3,20 +3,27 @@
  * @author  Nazar Mokrynskyi <nazar@mokrynskyi.com>
  * @license 0BSD
  */
+const DEFAULT_TIMEOUTS	=
+	# After 5 minutes aware of node is considered stale and needs refreshing or replacing with a new one
+	'STALE_AWARE_OF_NODE_TIMEOUT'	: 5 * 60
+
 function Wrapper (detox-utils, async-eventer)
 	ArrayMap	= detox-utils['ArrayMap']
 	ArraySet	= detox-utils['ArraySet']
 	/**
 	 * @constructor
 	 *
-	 * @param {!Array<string>}	bootstrap_nodes		Array of strings in format `node_id:address:port`
+	 * @param {!Array<string>}			bootstrap_nodes		Array of strings in format `node_id:address:port`
+	 * @param {!Object<string, number>}	timeouts			Various timeouts and intervals used internally
 	 *
 	 * @return {!Manager}
 	 */
-	!function Manager (bootstrap_nodes)
+	!function Manager (bootstrap_nodes, timeouts = {}) #TODO If there are not many timeouts, think about simplifying to plain arguments
 		if !(@ instanceof Manager)
-			return new Manager(bootstrap_nodes)
+			return new Manager(bootstrap_nodes, timeouts)
 		async-eventer.call(@)
+
+		@_timeouts				= Object.assign({}, DEFAULT_TIMEOUTS, timeouts)
 
 		# TODO: Limit number of stored bootstrap nodes
 		@_bootstrap_nodes		= ArrayMap(bootstrap_nodes)
@@ -25,7 +32,14 @@ function Wrapper (detox-utils, async-eventer)
 		@_connected_nodes		= ArraySet()
 		@_peers					= ArraySet()
 		@_aware_of_nodes		= ArrayMap()
-		# TODO: Timer for removing stale aware of nodes
+
+		@_cleanup_interval	= intervalSet(@_timeouts['STALE_AWARE_OF_NODE_TIMEOUT'], !~>
+			# Remove aware of nodes that are stale for more that double of regular timeout
+			super_stale_older_than	= +(new Date) - @_timeouts['STALE_AWARE_OF_NODE_TIMEOUT'] * 2 * 1000
+			@_aware_of_nodes.forEach (date, node_id) !~>
+				if date < super_stale_older_than
+					@_aware_of_nodes.delete(node_id)
+		)
 		# TODO
 
 	Manager:: =
@@ -87,7 +101,7 @@ function Wrapper (detox-utils, async-eventer)
 		 * @param {!Uint8Array}			peer_id
 		 * @param {!Array<!Uint8Array>}	peer_peers
 		 */
-		'add_peer' : (peer_id, peer_peers) !->
+		'set_peer' : (peer_id, peer_peers) !->
 			@_peers.add(peer_id)
 			# TODO: Store aware of nodes separately from peer's peers
 			for peer_peer_id in peer_peers
@@ -100,14 +114,9 @@ function Wrapper (detox-utils, async-eventer)
 		'set_aware_of_nodes' : (node_id, nodes) !->
 			# TODO: Implement, check if aware of nodes are node_id's peers, in which case ignore and generate a warning
 		/**
-		 * @return {boolean}
-		 */
-		'has_stale_aware_of_nodes' : ->
-			# TODO: Implement
-		/**
 		 * @return {!Array<!Uint8Array>}
 		 */
-		'get_stale_aware_of_nodes' : ->
+		'get_aware_of_nodes' : ->
 			# TODO: Implement
 		/**
 		 * @param {number}	number_of_nodes
@@ -115,14 +124,23 @@ function Wrapper (detox-utils, async-eventer)
 		 * @return {Array<!Uint8Array>} `null` if there was not enough nodes
 		 */
 		'get_nodes_for_routing_path' : (number_of_nodes) ->
+			nodes	= []
 			# TODO: Implement
+			if !nodes.length
+				return null
+			# Store first node as used, so that we don't use it for building other routing paths
+			@_used_first_nodes.add(nodes[0])
+			nodes
+		/**
+		 * @param {!Uint8Array} node_id
+		 */
 		'del_first_node_in_routing_path' : (node_id) !->
 			@_used_first_nodes.delete(first_node)
 		'destroy' : !->
 			if @_destroyed
 				return
 			@_destroyed	= true
-			# TODO
+			clearInterval(@_cleanup_interval)
 		# TODO: More methods here
 
 	Manager:: = Object.assign(Object.create(async-eventer::), Manager::)

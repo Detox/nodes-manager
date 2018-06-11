@@ -5,6 +5,10 @@
  * @license 0BSD
  */
 (function(){
+  var DEFAULT_TIMEOUTS;
+  DEFAULT_TIMEOUTS = {
+    'STALE_AWARE_OF_NODE_TIMEOUT': 5 * 60
+  };
   function Wrapper(detoxUtils, asyncEventer){
     var ArrayMap, ArraySet;
     ArrayMap = detoxUtils['ArrayMap'];
@@ -12,21 +16,34 @@
     /**
      * @constructor
      *
-     * @param {!Array<string>}	bootstrap_nodes		Array of strings in format `node_id:address:port`
+     * @param {!Array<string>}			bootstrap_nodes		Array of strings in format `node_id:address:port`
+     * @param {!Object<string, number>}	timeouts			Various timeouts and intervals used internally
      *
      * @return {!Manager}
      */
-    function Manager(bootstrap_nodes){
+    function Manager(bootstrap_nodes, timeouts){
+      var this$ = this;
+      timeouts == null && (timeouts = {});
       if (!(this instanceof Manager)) {
-        return new Manager(bootstrap_nodes);
+        return new Manager(bootstrap_nodes, timeouts);
       }
       asyncEventer.call(this);
+      this._timeouts = Object.assign({}, DEFAULT_TIMEOUTS, timeouts);
       this._bootstrap_nodes = ArrayMap(bootstrap_nodes);
       this._bootstrap_nodes_ids = ArrayMap();
       this._used_first_nodes = ArraySet();
       this._connected_nodes = ArraySet();
       this._peers = ArraySet();
       this._aware_of_nodes = ArrayMap();
+      this._cleanup_interval = intervalSet(this._timeouts['STALE_AWARE_OF_NODE_TIMEOUT'], function(){
+        var super_stale_older_than;
+        super_stale_older_than = +new Date - this$._timeouts['STALE_AWARE_OF_NODE_TIMEOUT'] * 2 * 1000;
+        this$._aware_of_nodes.forEach(function(date, node_id){
+          if (date < super_stale_older_than) {
+            this$._aware_of_nodes['delete'](node_id);
+          }
+        });
+      });
     }
     Manager.prototype = {
       /**
@@ -90,7 +107,7 @@
        * @param {!Uint8Array}			peer_id
        * @param {!Array<!Uint8Array>}	peer_peers
        */,
-      'add_peer': function(peer_id, peer_peers){
+      'set_peer': function(peer_id, peer_peers){
         var i$, len$, peer_peer_id;
         this._peers.add(peer_id);
         for (i$ = 0, len$ = peer_peers.length; i$ < len$; ++i$) {
@@ -106,19 +123,26 @@
        */,
       'set_aware_of_nodes': function(node_id, nodes){}
       /**
-       * @return {boolean}
-       */,
-      'has_stale_aware_of_nodes': function(){}
-      /**
        * @return {!Array<!Uint8Array>}
        */,
-      'get_stale_aware_of_nodes': function(){}
+      'get_aware_of_nodes': function(){}
       /**
        * @param {number}	number_of_nodes
        *
        * @return {Array<!Uint8Array>} `null` if there was not enough nodes
        */,
-      'get_nodes_for_routing_path': function(number_of_nodes){},
+      'get_nodes_for_routing_path': function(number_of_nodes){
+        var nodes;
+        nodes = [];
+        if (!nodes.length) {
+          return null;
+        }
+        this._used_first_nodes.add(nodes[0]);
+        return nodes;
+      }
+      /**
+       * @param {!Uint8Array} node_id
+       */,
       'del_first_node_in_routing_path': function(node_id){
         this._used_first_nodes['delete'](first_node);
       },
@@ -127,6 +151,7 @@
           return;
         }
         this._destroyed = true;
+        clearInterval(this._cleanup_interval);
       }
     };
     Manager.prototype = Object.assign(Object.create(asyncEventer.prototype), Manager.prototype);
