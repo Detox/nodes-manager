@@ -3,9 +3,8 @@
  * @author  Nazar Mokrynskyi <nazar@mokrynskyi.com>
  * @license 0BSD
  */
-const DEFAULT_TIMEOUTS	=
-	# After 5 minutes aware of node is considered stale and needs refreshing or replacing with a new one
-	'STALE_AWARE_OF_NODE_TIMEOUT'	: 5 * 60
+# After 5 minutes aware of node is considered stale and needs refreshing or replacing with a new one
+const STALE_AWARE_OF_NODE_TIMEOUT	= 5 * 60
 
 function Wrapper (detox-utils, async-eventer)
 	pull_random_item_from_array	= detox-utils['pull_random_item_from_array']
@@ -14,19 +13,20 @@ function Wrapper (detox-utils, async-eventer)
 	/**
 	 * @constructor
 	 *
-	 * @param {!Array<string>}			bootstrap_nodes			Array of strings in format `node_id:address:port`
-	 * @param {!Array<string>}			aware_of_nodes_limit	How many aware of nodes should be kept in memory
-	 * @param {!Object<string, number>}	timeouts				Various timeouts and intervals used internally
+	 * @param {!Array<string>}	bootstrap_nodes				Array of strings in format `node_id:address:port`
+	 * @param {!Array<string>}	aware_of_nodes_limit		How many aware of nodes should be kept in memory
+	 * @param {number}			stale_aware_of_node_timeout
 	 *
 	 * @return {!Manager}
 	 */
-	!function Manager (bootstrap_nodes, aware_of_nodes_limit = 1000, timeouts = {}) #TODO If there are not many timeouts, think about simplifying to plain arguments
+	!function Manager (bootstrap_nodes, aware_of_nodes_limit = 1000, stale_aware_of_node_timeout = STALE_AWARE_OF_NODE_TIMEOUT) #TODO If there are not many timeouts, think about simplifying to plain arguments
 		if !(@ instanceof Manager)
 			return new Manager(bootstrap_nodes, aware_of_nodes_limit, timeouts)
 		async-eventer.call(@)
 
-		@_timeouts				= Object.assign({}, DEFAULT_TIMEOUTS, timeouts)
-		@_aware_of_nodes_limit	= aware_of_nodes_limit
+		@_timeouts						= Object.assign({}, DEFAULT_TIMEOUTS, timeouts)
+		@_aware_of_nodes_limit			= aware_of_nodes_limit
+		@_stale_aware_of_node_timeout	= stale_aware_of_node_timeout
 
 		# TODO: Limit number of stored bootstrap nodes
 		@_bootstrap_nodes		= ArrayMap(bootstrap_nodes)
@@ -36,9 +36,9 @@ function Wrapper (detox-utils, async-eventer)
 		@_peers					= ArraySet()
 		@_aware_of_nodes		= ArrayMap()
 
-		@_cleanup_interval	= intervalSet(@_timeouts['STALE_AWARE_OF_NODE_TIMEOUT'], !~>
+		@_cleanup_interval	= intervalSet(@_stale_aware_of_node_timeout, !~>
 			# Remove aware of nodes that are stale for more that double of regular timeout
-			super_stale_older_than	= +(new Date) - @_timeouts['STALE_AWARE_OF_NODE_TIMEOUT'] * 2 * 1000
+			super_stale_older_than	= +(new Date) - @_stale_aware_of_node_timeout * 2 * 1000
 			@_aware_of_nodes.forEach (date, node_id) !~>
 				if date < super_stale_older_than
 					@_aware_of_nodes.delete(node_id)
@@ -183,7 +183,7 @@ function Wrapper (detox-utils, async-eventer)
 		 */
 		_get_stale_aware_of_nodes : (early_exit = false) ->
 			stale_aware_of_nodes	= []
-			stale_older_than		= +(new Date) - @_timeouts['STALE_AWARE_OF_NODE_TIMEOUT'] * 1000
+			stale_older_than		= +(new Date) - @_stale_aware_of_node_timeout * 1000
 			exited					= false
 			@_aware_of_nodes.forEach (date, node_id) !->
 				if !exited && date < stale_older_than

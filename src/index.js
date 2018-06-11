@@ -5,10 +5,8 @@
  * @license 0BSD
  */
 (function(){
-  var DEFAULT_TIMEOUTS;
-  DEFAULT_TIMEOUTS = {
-    'STALE_AWARE_OF_NODE_TIMEOUT': 5 * 60
-  };
+  var STALE_AWARE_OF_NODE_TIMEOUT;
+  STALE_AWARE_OF_NODE_TIMEOUT = 5 * 60;
   function Wrapper(detoxUtils, asyncEventer){
     var pull_random_item_from_array, ArrayMap, ArraySet;
     pull_random_item_from_array = detoxUtils['pull_random_item_from_array'];
@@ -17,31 +15,32 @@
     /**
      * @constructor
      *
-     * @param {!Array<string>}			bootstrap_nodes			Array of strings in format `node_id:address:port`
-     * @param {!Array<string>}			aware_of_nodes_limit	How many aware of nodes should be kept in memory
-     * @param {!Object<string, number>}	timeouts				Various timeouts and intervals used internally
+     * @param {!Array<string>}	bootstrap_nodes				Array of strings in format `node_id:address:port`
+     * @param {!Array<string>}	aware_of_nodes_limit		How many aware of nodes should be kept in memory
+     * @param {number}			stale_aware_of_node_timeout
      *
      * @return {!Manager}
      */
-    function Manager(bootstrap_nodes, aware_of_nodes_limit, timeouts){
+    function Manager(bootstrap_nodes, aware_of_nodes_limit, stale_aware_of_node_timeout){
       var this$ = this;
       aware_of_nodes_limit == null && (aware_of_nodes_limit = 1000);
-      timeouts == null && (timeouts = {});
+      stale_aware_of_node_timeout == null && (stale_aware_of_node_timeout = STALE_AWARE_OF_NODE_TIMEOUT);
       if (!(this instanceof Manager)) {
         return new Manager(bootstrap_nodes, aware_of_nodes_limit, timeouts);
       }
       asyncEventer.call(this);
       this._timeouts = Object.assign({}, DEFAULT_TIMEOUTS, timeouts);
       this._aware_of_nodes_limit = aware_of_nodes_limit;
+      this._stale_aware_of_node_timeout = stale_aware_of_node_timeout;
       this._bootstrap_nodes = ArrayMap(bootstrap_nodes);
       this._bootstrap_nodes_ids = ArrayMap();
       this._used_first_nodes = ArraySet();
       this._connected_nodes = ArraySet();
       this._peers = ArraySet();
       this._aware_of_nodes = ArrayMap();
-      this._cleanup_interval = intervalSet(this._timeouts['STALE_AWARE_OF_NODE_TIMEOUT'], function(){
+      this._cleanup_interval = intervalSet(this._stale_aware_of_node_timeout, function(){
         var super_stale_older_than;
-        super_stale_older_than = +new Date - this$._timeouts['STALE_AWARE_OF_NODE_TIMEOUT'] * 2 * 1000;
+        super_stale_older_than = +new Date - this$._stale_aware_of_node_timeout * 2 * 1000;
         this$._aware_of_nodes.forEach(function(date, node_id){
           if (date < super_stale_older_than) {
             this$._aware_of_nodes['delete'](node_id);
@@ -213,7 +212,7 @@
         var stale_aware_of_nodes, stale_older_than, exited;
         early_exit == null && (early_exit = false);
         stale_aware_of_nodes = [];
-        stale_older_than = +new Date - this._timeouts['STALE_AWARE_OF_NODE_TIMEOUT'] * 1000;
+        stale_older_than = +new Date - this._stale_aware_of_node_timeout * 1000;
         exited = false;
         this._aware_of_nodes.forEach(function(date, node_id){
           if (!exited && date < stale_older_than) {
