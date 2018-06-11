@@ -30,7 +30,12 @@ function Wrapper (detox-utils, async-eventer)
 		 */
 		'add_bootstrap_node' : (bootstrap_node) !->
 			bootstrap_node_id	= hex2array(bootstrap_node.split(':')[0])
-			@_bootstrap_nodes_ids.set(bootstrap_node_id, bootstrap_node)
+			@_bootstrap_nodes.set(bootstrap_node_id, bootstrap_node)
+		/**
+		 * @param {!Array<string>} bootstrap_node
+		 */
+		'get_bootstrap_nodes' : ->
+			Array.from(@_bootstrap_nodes.values())
 		/**
 		 * @param {!Array<!Uint8Array>} exclude_nodes
 		 *
@@ -115,9 +120,8 @@ function Wrapper (detox-utils, async-eventer)
 
 	Manager:: = Object.assign(Object.create(async-eventer::), Manager::)
 	Object.defineProperty(Manager::, 'constructor', {value: Manager})
-	{
-		'Manager'	: Manager
-	}
+
+	Manager
 
 if typeof define == 'function' && define['amd']
 	# AMD
@@ -127,4 +131,4 @@ else if typeof exports == 'object'
 	module.exports = Wrapper(require('@detox/utils'), require('async-eventer'))
 else
 	# Browser globals
-	@'detox_core' = Wrapper(@'detox_utils', @'async_eventer')
+	@'detox_nodes_manager' = Wrapper(@'detox_utils', @'async_eventer')

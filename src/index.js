@@ -32,7 +32,13 @@
       'add_bootstrap_node': function(bootstrap_node){
         var bootstrap_node_id;
         bootstrap_node_id = hex2array(bootstrap_node.split(':')[0]);
-        this._bootstrap_nodes_ids.set(bootstrap_node_id, bootstrap_node);
+        this._bootstrap_nodes.set(bootstrap_node_id, bootstrap_node);
+      }
+      /**
+       * @param {!Array<string>} bootstrap_node
+       */,
+      'get_bootstrap_nodes': function(){
+        return Array.from(this._bootstrap_nodes.values());
       }
       /**
        * @param {!Array<!Uint8Array>} exclude_nodes
@@ -122,15 +128,13 @@
     Object.defineProperty(Manager.prototype, 'constructor', {
       value: Manager
     });
-    return {
-      'Manager': Manager
-    };
+    return Manager;
   }
   if (typeof define === 'function' && define['amd']) {
     define(['@detox/utils', 'async-eventer'], Wrapper);
   } else if (typeof exports === 'object') {
     module.exports = Wrapper(require('@detox/utils'), require('async-eventer'));
   } else {
-    this['detox_core'] = Wrapper(this['detox_utils'], this['async_eventer']);
+    this['detox_nodes_manager'] = Wrapper(this['detox_utils'], this['async_eventer']);
   }
 }).call(this);
