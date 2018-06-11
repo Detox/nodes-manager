@@ -7,7 +7,9 @@
 const STALE_AWARE_OF_NODE_TIMEOUT	= 5 * 60
 
 function Wrapper (detox-utils, async-eventer)
+	hex2array					= detox-utils['hex2array']
 	pull_random_item_from_array	= detox-utils['pull_random_item_from_array']
+	intervalSet					= detox-utils['intervalSet']
 	ArrayMap					= detox-utils['ArrayMap']
 	ArraySet					= detox-utils['ArraySet']
 	/**
@@ -24,12 +26,14 @@ function Wrapper (detox-utils, async-eventer)
 			return new Manager(bootstrap_nodes, aware_of_nodes_limit, stale_aware_of_node_timeout)
 		async-eventer.call(@)
 
-		@_timeouts						= Object.assign({}, DEFAULT_TIMEOUTS, timeouts)
 		@_aware_of_nodes_limit			= aware_of_nodes_limit
 		@_stale_aware_of_node_timeout	= stale_aware_of_node_timeout
 
 		# TODO: Limit number of stored bootstrap nodes
-		@_bootstrap_nodes		= ArrayMap(bootstrap_nodes)
+		@_bootstrap_nodes		= ArrayMap()
+		for bootstrap_node in bootstrap_nodes
+			bootstrap_node_id	= hex2array(bootstrap_node.split(':')[0])
+			@_bootstrap_nodes.set(bootstrap_node_id, bootstrap_node)
 		@_bootstrap_nodes_ids	= ArrayMap()
 		@_used_first_nodes		= ArraySet()
 		@_connected_nodes		= ArraySet()

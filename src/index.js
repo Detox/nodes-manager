@@ -8,8 +8,10 @@
   var STALE_AWARE_OF_NODE_TIMEOUT;
   STALE_AWARE_OF_NODE_TIMEOUT = 5 * 60;
   function Wrapper(detoxUtils, asyncEventer){
-    var pull_random_item_from_array, ArrayMap, ArraySet;
+    var hex2array, pull_random_item_from_array, intervalSet, ArrayMap, ArraySet;
+    hex2array = detoxUtils['hex2array'];
     pull_random_item_from_array = detoxUtils['pull_random_item_from_array'];
+    intervalSet = detoxUtils['intervalSet'];
     ArrayMap = detoxUtils['ArrayMap'];
     ArraySet = detoxUtils['ArraySet'];
     /**
@@ -22,17 +24,21 @@
      * @return {!Manager}
      */
     function Manager(bootstrap_nodes, aware_of_nodes_limit, stale_aware_of_node_timeout){
-      var this$ = this;
+      var i$, len$, bootstrap_node, bootstrap_node_id, this$ = this;
       aware_of_nodes_limit == null && (aware_of_nodes_limit = 1000);
       stale_aware_of_node_timeout == null && (stale_aware_of_node_timeout = STALE_AWARE_OF_NODE_TIMEOUT);
       if (!(this instanceof Manager)) {
         return new Manager(bootstrap_nodes, aware_of_nodes_limit, stale_aware_of_node_timeout);
       }
       asyncEventer.call(this);
-      this._timeouts = Object.assign({}, DEFAULT_TIMEOUTS, timeouts);
       this._aware_of_nodes_limit = aware_of_nodes_limit;
       this._stale_aware_of_node_timeout = stale_aware_of_node_timeout;
-      this._bootstrap_nodes = ArrayMap(bootstrap_nodes);
+      this._bootstrap_nodes = ArrayMap();
+      for (i$ = 0, len$ = bootstrap_nodes.length; i$ < len$; ++i$) {
+        bootstrap_node = bootstrap_nodes[i$];
+        bootstrap_node_id = hex2array(bootstrap_node.split(':')[0]);
+        this._bootstrap_nodes.set(bootstrap_node_id, bootstrap_node);
+      }
       this._bootstrap_nodes_ids = ArrayMap();
       this._used_first_nodes = ArraySet();
       this._connected_nodes = ArraySet();
