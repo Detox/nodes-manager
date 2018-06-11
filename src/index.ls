@@ -9,30 +9,37 @@ function Wrapper (detox-utils, async-eventer)
 	/**
 	 * @constructor
 	 *
+	 * @param {!Array<string>}	bootstrap_nodes		Array of strings in format `node_id:address:port`
+	 *
 	 * @return {!Manager}
 	 */
-	!function Manager ()
+	!function Manager (bootstrap_nodes)
 		if !(@ instanceof Manager)
-			return new Manager()
+			return new Manager(bootstrap_nodes)
 		async-eventer.call(@)
 
-		@_bootstrap_nodes	= ArrayMap()
-		@_used_first_nodes	= ArraySet()
-		@_connected_nodes	= ArraySet()
-		@_peers				= ArraySet()
-		@_aware_of_nodes	= ArrayMap()
+		# TODO: Limit number of stored bootstrap nodes
+		@_bootstrap_nodes		= ArrayMap(bootstrap_nodes)
+		@_bootstrap_nodes_ids	= ArrayMap()
+		@_used_first_nodes		= ArraySet()
+		@_connected_nodes		= ArraySet()
+		@_peers					= ArraySet()
+		@_aware_of_nodes		= ArrayMap()
 		# TODO: Timer for removing stale aware of nodes
 		# TODO
 
 	Manager:: =
 		/**
-		 * @param {string} bootstrap_node
+		 * @param {!Uint8Array}	node_id
+		 * @param {string}		bootstrap_node
 		 */
-		'add_bootstrap_node' : (bootstrap_node) !->
+		'add_bootstrap_node' : (node_id, bootstrap_node) !->
 			bootstrap_node_id	= hex2array(bootstrap_node.split(':')[0])
 			@_bootstrap_nodes.set(bootstrap_node_id, bootstrap_node)
+			# TODO: Check if this happens for the first time, generate warning/error if not
+			@_bootstrap_nodes_ids.set(node_id, bootstrap_node_id)
 		/**
-		 * @param {!Array<string>} bootstrap_node
+		 * @return {!Array<string>}
 		 */
 		'get_bootstrap_nodes' : ->
 			Array.from(@_bootstrap_nodes.values())

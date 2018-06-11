@@ -12,14 +12,17 @@
     /**
      * @constructor
      *
+     * @param {!Array<string>}	bootstrap_nodes		Array of strings in format `node_id:address:port`
+     *
      * @return {!Manager}
      */
-    function Manager(){
+    function Manager(bootstrap_nodes){
       if (!(this instanceof Manager)) {
-        return new Manager();
+        return new Manager(bootstrap_nodes);
       }
       asyncEventer.call(this);
-      this._bootstrap_nodes = ArrayMap();
+      this._bootstrap_nodes = ArrayMap(bootstrap_nodes);
+      this._bootstrap_nodes_ids = ArrayMap();
       this._used_first_nodes = ArraySet();
       this._connected_nodes = ArraySet();
       this._peers = ArraySet();
@@ -27,15 +30,17 @@
     }
     Manager.prototype = {
       /**
-       * @param {string} bootstrap_node
+       * @param {!Uint8Array}	node_id
+       * @param {string}		bootstrap_node
        */
-      'add_bootstrap_node': function(bootstrap_node){
+      'add_bootstrap_node': function(node_id, bootstrap_node){
         var bootstrap_node_id;
         bootstrap_node_id = hex2array(bootstrap_node.split(':')[0]);
         this._bootstrap_nodes.set(bootstrap_node_id, bootstrap_node);
+        this._bootstrap_nodes_ids.set(node_id, bootstrap_node_id);
       }
       /**
-       * @param {!Array<string>} bootstrap_node
+       * @return {!Array<string>}
        */,
       'get_bootstrap_nodes': function(){
         return Array.from(this._bootstrap_nodes.values());
