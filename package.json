@@ -1,0 +1,29 @@
+{
+	"name"            : "@detox/nodes-manager",
+	"description"     : "",
+	"keywords"        : [],
+	"version"         : "",
+	"homepage"        : "https://github.com/Detox/nodes-manager",
+	"author"          : "Nazar Mokrynskyi <nazar@mokrynskyi.com>",
+	"repository"      : {
+		"type" : "git",
+		"url"  : "git://github.com/Detox/nodes-manager.git"
+	},
+	"license"         : "0BSD",
+	"main"            : "src/index.js",
+	"files"           : [
+		"src"
+	],
+	"scripts"         : {
+		"test" : "tape tests/**/*.js"
+	},
+	"dependencies"    : {
+		"@detox/crypto" : "^0.7.1",
+		"@detox/utils"  : "^1.10.0",
+		"async-eventer" : "^1.1.7"
+	},
+	"devDependencies" : {
+		"build-gc" : "^0.1.1",
+		"tape"     : "^4.9.1"
+	}
+}
