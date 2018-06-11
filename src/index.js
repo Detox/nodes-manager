@@ -166,11 +166,33 @@
        * @param {!Uint8Array}			node_id	Source node ID
        * @param {!Array<!Uint8Array>}	nodes	IDs of nodes `node_id` is aware of
        */,
-      'set_aware_of_nodes': function(node_id, nodes){}
+      'set_aware_of_nodes': function(node_id, nodes){
+        var stale_aware_of_nodes, i$, len$, new_node_id, stale_node_to_remove;
+        stale_aware_of_nodes = this._get_stale_aware_of_nodes();
+        for (i$ = 0, len$ = nodes.length; i$ < len$; ++i$) {
+          new_node_id = nodes[i$];
+          if (this._connected_nodes.has(new_node_id)) {
+            continue;
+          }
+          if (this._aware_of_nodes.has(new_node_id) || this._aware_of_nodes.size < this._aware_of_nodes_limit) {
+            this._aware_of_nodes.set(new_node_id, +new Date);
+            this['fire']('aware_of_nodes_count', this._aware_of_nodes.size);
+          } else if (stale_aware_of_nodes.length) {
+            stale_node_to_remove = pull_random_item_from_array(stale_aware_of_nodes);
+            this._aware_of_nodes['delete'](stale_node_to_remove);
+            this._aware_of_nodes.set(new_node_id, +new Date);
+            this['fire']('aware_of_nodes_count', this._aware_of_nodes.size);
+          } else {
+            break;
+          }
+        }
+      }
       /**
+       * @param {!Uint8Array} for_node_id
+       *
        * @return {!Array<!Uint8Array>}
        */,
-      'get_aware_of_nodes': function(){
+      'get_aware_of_nodes': function(for_node_id){
         var nodes;
         nodes = this._get_random_connected_nodes(7) || [];
         nodes = nodes.concat(this._get_random_aware_of_nodes(10 - nodes.length) || []);

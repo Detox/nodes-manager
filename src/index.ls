@@ -145,12 +145,29 @@ function Wrapper (detox-utils, async-eventer)
 		 * @param {!Array<!Uint8Array>}	nodes	IDs of nodes `node_id` is aware of
 		 */
 		'set_aware_of_nodes' : (node_id, nodes) !->
-			# TODO: Implement, check if aware of nodes are node_id's peers, in which case ignore and generate a warning
+			# TODO: Check if aware of nodes are node_id's peers, in which case ignore and generate a warning
+			stale_aware_of_nodes	= @_get_stale_aware_of_nodes()
+			for new_node_id in nodes
+				# Ignore already connected nodes and own ID or if there are enough nodes already
+				if @_connected_nodes.has(new_node_id)
+					continue
+				if @_aware_of_nodes.has(new_node_id) || @_aware_of_nodes.size < @_aware_of_nodes_limit
+					@_aware_of_nodes.set(new_node_id, +(new Date))
+					@'fire'('aware_of_nodes_count', @_aware_of_nodes.size)
+				else if stale_aware_of_nodes.length
+					stale_node_to_remove = pull_random_item_from_array(stale_aware_of_nodes)
+					@_aware_of_nodes.delete(stale_node_to_remove)
+					@_aware_of_nodes.set(new_node_id, +(new Date))
+					@'fire'('aware_of_nodes_count', @_aware_of_nodes.size)
+				else
+					break
 		/**
+		 * @param {!Uint8Array} for_node_id
+		 *
 		 * @return {!Array<!Uint8Array>}
 		 */
-		'get_aware_of_nodes' : ->
-			# TODO: Rewrite completely, return peers of peers and aware of nodes that are not our own peers yet
+		'get_aware_of_nodes' : (for_node_id) ->
+			# TODO: Rewrite completely, return peers of peers and aware of nodes that are not our own peers yet, use `for_node_id`
 			nodes	= @_get_random_connected_nodes(7) || []
 			nodes	= nodes.concat(@_get_random_aware_of_nodes(10 - nodes.length) || [])
 			nodes
@@ -223,7 +240,6 @@ function Wrapper (detox-utils, async-eventer)
 				return
 			@_destroyed	= true
 			clearInterval(@_cleanup_interval)
-		# TODO: More methods here
 
 	Manager:: = Object.assign(Object.create(async-eventer::), Manager::)
 	Object.defineProperty(Manager::, 'constructor', {value: Manager})
