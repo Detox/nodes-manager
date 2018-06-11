@@ -150,7 +150,10 @@ function Wrapper (detox-utils, async-eventer)
 		 * @return {!Array<!Uint8Array>}
 		 */
 		'get_aware_of_nodes' : ->
-			# TODO: Implement
+			# TODO: Rewrite completely, return peers of peers who are not our peers yet
+			nodes	= @_get_random_connected_nodes(7) || []
+			nodes	= nodes.concat(@_get_random_aware_of_nodes(10 - nodes.length) || [])
+			nodes
 		/**
 		 * @return {boolean}
 		 */
@@ -172,18 +175,44 @@ function Wrapper (detox-utils, async-eventer)
 						exited	:= true
 			stale_aware_of_nodes
 		/**
-		 * @param {number}	number_of_nodes
+		 * Get some random nodes suitable for constructing routing path through them or for acting as introduction nodes
+		 *
+		 * @param {number}					number_of_nodes
+		 * @param {!Array<!Uint8Array>=}	exclude_nodes
 		 *
 		 * @return {Array<!Uint8Array>} `null` if there was not enough nodes
 		 */
-		'get_nodes_for_routing_path' : (number_of_nodes) ->
-			nodes	= []
-			# TODO: Implement
-			if !nodes.length
+		'get_nodes_for_routing_path' : (number_of_nodes, exclude_nodes = []) ->
+			exclude_nodes	= Array.from(@_used_first_nodes.values()).concat(exclude_nodes)
+			connected_node	= @_get_random_connected_nodes(1, exclude_nodes)?[0]
+			if !connected_node
+				return null
+			intermediate_nodes	= @_get_random_aware_of_nodes(number_of_nodes - 1, exclude_nodes.concat([connected_node]))
+			if !intermediate_nodes
 				return null
 			# Store first node as used, so that we don't use it for building other routing paths
-			@_used_first_nodes.add(nodes[0])
-			nodes
+			@_used_first_nodes.add(connected_node)
+			[connected_node].concat(intermediate_nodes)
+		/**
+		 * Get some random nodes from those that current node is aware of
+		 *
+		 * @param {number}					number_of_nodes
+		 * @param {!Array<!Uint8Array>=}	exclude_nodes
+		 *
+		 * @return {Array<!Uint8Array>} `null` if there was not enough nodes
+		 */
+		_get_random_aware_of_nodes : (number_of_nodes, exclude_nodes) ->
+			if @_aware_of_nodes.size < number_of_nodes
+				return null
+			aware_of_nodes	= Array.from(@_aware_of_nodes.keys())
+			if exclude_nodes
+				exclude_nodes_set	= ArraySet(exclude_nodes)
+				aware_of_nodes		= aware_of_nodes.filter (node) ->
+					!exclude_nodes_set.has(node)
+			if aware_of_nodes.length < number_of_nodes
+				return null
+			for i from 0 til number_of_nodes
+				pull_random_item_from_array(aware_of_nodes)
 		/**
 		 * @param {!Uint8Array} node_id
 		 */

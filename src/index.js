@@ -170,7 +170,12 @@
       /**
        * @return {!Array<!Uint8Array>}
        */,
-      'get_aware_of_nodes': function(){}
+      'get_aware_of_nodes': function(){
+        var nodes;
+        nodes = this._get_random_connected_nodes(7) || [];
+        nodes = nodes.concat(this._get_random_aware_of_nodes(10 - nodes.length) || []);
+        return nodes;
+      }
       /**
        * @return {boolean}
        */,
@@ -199,18 +204,56 @@
         return stale_aware_of_nodes;
       }
       /**
-       * @param {number}	number_of_nodes
+       * Get some random nodes suitable for constructing routing path through them or for acting as introduction nodes
+       *
+       * @param {number}					number_of_nodes
+       * @param {!Array<!Uint8Array>=}	exclude_nodes
        *
        * @return {Array<!Uint8Array>} `null` if there was not enough nodes
        */,
-      'get_nodes_for_routing_path': function(number_of_nodes){
-        var nodes;
-        nodes = [];
-        if (!nodes.length) {
+      'get_nodes_for_routing_path': function(number_of_nodes, exclude_nodes){
+        var connected_node, ref$, intermediate_nodes;
+        exclude_nodes == null && (exclude_nodes = []);
+        exclude_nodes = Array.from(this._used_first_nodes.values()).concat(exclude_nodes);
+        connected_node = (ref$ = this._get_random_connected_nodes(1, exclude_nodes)) != null ? ref$[0] : void 8;
+        if (!connected_node) {
           return null;
         }
-        this._used_first_nodes.add(nodes[0]);
-        return nodes;
+        intermediate_nodes = this._get_random_aware_of_nodes(number_of_nodes - 1, exclude_nodes.concat([connected_node]));
+        if (!intermediate_nodes) {
+          return null;
+        }
+        this._used_first_nodes.add(connected_node);
+        return [connected_node].concat(intermediate_nodes);
+      }
+      /**
+       * Get some random nodes from those that current node is aware of
+       *
+       * @param {number}					number_of_nodes
+       * @param {!Array<!Uint8Array>=}	exclude_nodes
+       *
+       * @return {Array<!Uint8Array>} `null` if there was not enough nodes
+       */,
+      _get_random_aware_of_nodes: function(number_of_nodes, exclude_nodes){
+        var aware_of_nodes, exclude_nodes_set, i$, i, results$ = [];
+        if (this._aware_of_nodes.size < number_of_nodes) {
+          return null;
+        }
+        aware_of_nodes = Array.from(this._aware_of_nodes.keys());
+        if (exclude_nodes) {
+          exclude_nodes_set = ArraySet(exclude_nodes);
+          aware_of_nodes = aware_of_nodes.filter(function(node){
+            return !exclude_nodes_set.has(node);
+          });
+        }
+        if (aware_of_nodes.length < number_of_nodes) {
+          return null;
+        }
+        for (i$ = 0; i$ < number_of_nodes; ++i$) {
+          i = i$;
+          results$.push(pull_random_item_from_array(aware_of_nodes));
+        }
+        return results$;
       }
       /**
        * @param {!Uint8Array} node_id
