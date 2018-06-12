@@ -9,6 +9,7 @@ const STALE_AWARE_OF_NODE_TIMEOUT	= 5 * 60
 function Wrapper (detox-utils, async-eventer)
 	hex2array					= detox-utils['hex2array']
 	pull_random_item_from_array	= detox-utils['pull_random_item_from_array']
+	are_arrays_equal			= detox-utils['are_arrays_equal']
 	intervalSet					= detox-utils['intervalSet']
 	ArrayMap					= detox-utils['ArrayMap']
 	ArraySet					= detox-utils['ArraySet']
@@ -37,7 +38,7 @@ function Wrapper (detox-utils, async-eventer)
 		@_bootstrap_nodes_ids	= ArrayMap()
 		@_used_first_nodes		= ArraySet()
 		@_connected_nodes		= ArraySet()
-		@_peers					= ArraySet()
+		@_peers					= ArrayMap()
 		@_aware_of_nodes		= ArrayMap()
 
 		@_cleanup_interval	= intervalSet(@_stale_aware_of_node_timeout, !~>
@@ -139,17 +140,18 @@ function Wrapper (detox-utils, async-eventer)
 		 * @param {!Array<!Uint8Array>}	peer_peers
 		 */
 		'set_peer' : (peer_id, peer_peers) !->
-			@_peers.add(peer_id)
-			# TODO: Store aware of nodes separately from peer's peers
-			for peer_peer_id in peer_peers
-				if !@_connected_nodes.has(peer_peer_id)
-					@_aware_of_nodes.set(peer_peer_id, +(new Date))
+			@_peers.set(peer_id, ArraySet(peer_peers))
 		/**
-		 * @param {!Uint8Array}			node_id	Source node ID
-		 * @param {!Array<!Uint8Array>}	nodes	IDs of nodes `node_id` is aware of
+		 * @param {!Uint8Array}			peer_id	Source node ID
+		 * @param {!Array<!Uint8Array>}	nodes	IDs of nodes `peer_id` is aware of
 		 */
-		'set_aware_of_nodes' : (node_id, nodes) !->
-			# TODO: Check if aware of nodes are node_id's peers, in which case ignore and generate a warning
+		'set_aware_of_nodes' : (peer_id, nodes) !->
+			peer_peers	= @_peers.get(peer_id)
+			for new_node_id in nodes
+				# Peer should not return own peers as aware of nodes
+				if peer_peers && peer_peers.has(new_node_id)
+					@'fire'('peer_warning', peer_id)
+					return
 			stale_aware_of_nodes	= @_get_stale_aware_of_nodes()
 			for new_node_id in nodes
 				# Ignore already connected nodes and own ID or if there are enough nodes already
@@ -171,9 +173,28 @@ function Wrapper (detox-utils, async-eventer)
 		 * @return {!Array<!Uint8Array>}
 		 */
 		'get_aware_of_nodes' : (for_node_id) ->
-			# TODO: Rewrite completely, return peers of peers and aware of nodes that are not our own peers yet, use `for_node_id`
-			nodes	= @_get_random_connected_nodes(7) || []
-			nodes	= nodes.concat(@_get_random_aware_of_nodes(10 - nodes.length) || [])
+			nodes			= []
+			aware_of_nodes	= Array.from(@_aware_of_nodes.keys())
+			for _ from 0 til 10
+				if !aware_of_nodes.length
+					break
+				node	= pull_random_item_from_array(aware_of_nodes)
+				if node
+					nodes.push(node)
+			if nodes.length < 10
+				candidates	= ArraySet()
+				@_peers.forEach (peer_peers, peer_id) !~>
+					if !are_arrays_equal(for_node_id, peer_id)
+						peer_peers.forEach (candidate) !~>
+							if !@_peers.has(candidate)
+								candidates.add(candidate)
+				candidates	= Array.from(candidates)
+				for _ from 0 til Math.min(5, 10 - nodes.length)
+					if !candidates.length
+						break
+					node	= pull_random_item_from_array(candidates)
+					if node
+						nodes.push(node)
 			nodes
 		/**
 		 * @return {boolean}

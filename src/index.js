@@ -8,9 +8,10 @@
   var STALE_AWARE_OF_NODE_TIMEOUT;
   STALE_AWARE_OF_NODE_TIMEOUT = 5 * 60;
   function Wrapper(detoxUtils, asyncEventer){
-    var hex2array, pull_random_item_from_array, intervalSet, ArrayMap, ArraySet;
+    var hex2array, pull_random_item_from_array, are_arrays_equal, intervalSet, ArrayMap, ArraySet;
     hex2array = detoxUtils['hex2array'];
     pull_random_item_from_array = detoxUtils['pull_random_item_from_array'];
+    are_arrays_equal = detoxUtils['are_arrays_equal'];
     intervalSet = detoxUtils['intervalSet'];
     ArrayMap = detoxUtils['ArrayMap'];
     ArraySet = detoxUtils['ArraySet'];
@@ -42,7 +43,7 @@
       this._bootstrap_nodes_ids = ArrayMap();
       this._used_first_nodes = ArraySet();
       this._connected_nodes = ArraySet();
-      this._peers = ArraySet();
+      this._peers = ArrayMap();
       this._aware_of_nodes = ArrayMap();
       this._cleanup_interval = intervalSet(this._stale_aware_of_node_timeout, function(){
         var super_stale_older_than;
@@ -158,21 +159,22 @@
        * @param {!Array<!Uint8Array>}	peer_peers
        */,
       'set_peer': function(peer_id, peer_peers){
-        var i$, len$, peer_peer_id;
-        this._peers.add(peer_id);
-        for (i$ = 0, len$ = peer_peers.length; i$ < len$; ++i$) {
-          peer_peer_id = peer_peers[i$];
-          if (!this._connected_nodes.has(peer_peer_id)) {
-            this._aware_of_nodes.set(peer_peer_id, +new Date);
-          }
-        }
+        this._peers.set(peer_id, ArraySet(peer_peers));
       }
       /**
-       * @param {!Uint8Array}			node_id	Source node ID
-       * @param {!Array<!Uint8Array>}	nodes	IDs of nodes `node_id` is aware of
+       * @param {!Uint8Array}			peer_id	Source node ID
+       * @param {!Array<!Uint8Array>}	nodes	IDs of nodes `peer_id` is aware of
        */,
-      'set_aware_of_nodes': function(node_id, nodes){
-        var stale_aware_of_nodes, i$, len$, new_node_id, stale_node_to_remove;
+      'set_aware_of_nodes': function(peer_id, nodes){
+        var peer_peers, i$, len$, new_node_id, stale_aware_of_nodes, stale_node_to_remove;
+        peer_peers = this._peers.get(peer_id);
+        for (i$ = 0, len$ = nodes.length; i$ < len$; ++i$) {
+          new_node_id = nodes[i$];
+          if (peer_peers && peer_peers.has(new_node_id)) {
+            this['fire']('peer_warning', peer_id);
+            return;
+          }
+        }
         stale_aware_of_nodes = this._get_stale_aware_of_nodes();
         for (i$ = 0, len$ = nodes.length; i$ < len$; ++i$) {
           new_node_id = nodes[i$];
@@ -198,9 +200,42 @@
        * @return {!Array<!Uint8Array>}
        */,
       'get_aware_of_nodes': function(for_node_id){
-        var nodes;
-        nodes = this._get_random_connected_nodes(7) || [];
-        nodes = nodes.concat(this._get_random_aware_of_nodes(10 - nodes.length) || []);
+        var nodes, aware_of_nodes, i$, _, node, candidates, to$, this$ = this;
+        nodes = [];
+        aware_of_nodes = Array.from(this._aware_of_nodes.keys());
+        for (i$ = 0; i$ < 10; ++i$) {
+          _ = i$;
+          if (!aware_of_nodes.length) {
+            break;
+          }
+          node = pull_random_item_from_array(aware_of_nodes);
+          if (node) {
+            nodes.push(node);
+          }
+        }
+        if (nodes.length < 10) {
+          candidates = ArraySet();
+          this._peers.forEach(function(peer_peers, peer_id){
+            if (!are_arrays_equal(for_node_id, peer_id)) {
+              peer_peers.forEach(function(candidate){
+                if (!this$._peers.has(candidate)) {
+                  candidates.add(candidate);
+                }
+              });
+            }
+          });
+          candidates = Array.from(candidates);
+          for (i$ = 0, to$ = Math.min(5, 10 - nodes.length); i$ < to$; ++i$) {
+            _ = i$;
+            if (!candidates.length) {
+              break;
+            }
+            node = pull_random_item_from_array(candidates);
+            if (node) {
+              nodes.push(node);
+            }
+          }
+        }
         return nodes;
       }
       /**
