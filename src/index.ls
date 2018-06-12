@@ -161,14 +161,13 @@ function Wrapper (detox-utils, async-eventer)
 					continue
 				if @_aware_of_nodes.has(new_node_id) || @_aware_of_nodes.size < @_aware_of_nodes_limit
 					@_aware_of_nodes.set(new_node_id, +(new Date))
-					@'fire'('aware_of_nodes_count', @_aware_of_nodes.size)
 				else if stale_aware_of_nodes.length
 					stale_node_to_remove = pull_random_item_from_array(stale_aware_of_nodes)
 					@_aware_of_nodes.delete(stale_node_to_remove)
 					@_aware_of_nodes.set(new_node_id, +(new Date))
-					@'fire'('aware_of_nodes_count', @_aware_of_nodes.size)
 				else
 					break
+			@'fire'('aware_of_nodes_count', @_aware_of_nodes.size)
 		/**
 		 * @param {!Uint8Array} for_node_id
 		 *

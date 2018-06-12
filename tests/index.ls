@@ -60,39 +60,44 @@ test('Manager', (t) !->
 
 				t.ok(manager.more_aware_of_nodes_needed(), 'More aware of nodes needed #1')
 
-				manager.set_aware_of_nodes(nodes[4], nodes.slice(20, 30))
+				manager.once('aware_of_nodes_count', (count) !->
+					t.equal(count, 9, 'Correct number of aware of nodes on peer setting')
 
-				t.equal(manager.get_aware_of_nodes(nodes[4]).length, 10, 'Get aware of nodes #4')
-				t.equal(manager.get_aware_of_nodes(nodes[3]).length, 10, 'Get aware of nodes #5')
+					manager.set_aware_of_nodes(nodes[4], [nodes[29]])
 
-				t.notOk(manager.more_aware_of_nodes_needed(), 'More aware of nodes needed #2')
+					t.equal(manager.get_aware_of_nodes(nodes[4]).length, 10, 'Get aware of nodes #4')
+					t.equal(manager.get_aware_of_nodes(nodes[3]).length, 10, 'Get aware of nodes #5')
 
-				manager.once('peer_warning', !->
-					t.pass('Peer warning generated #2')
+					t.notOk(manager.more_aware_of_nodes_needed(), 'More aware of nodes needed #2')
 
-					routing_path_nodes	= manager.get_nodes_for_routing_path(3)
-					t.equal(routing_path_nodes.length, 3, 'Routing path nodes #1')
-					t.ok(manager.has_connected_node(routing_path_nodes[0]), 'Routing path nodes #2')
-					t.notOk(manager.has_connected_node(routing_path_nodes[* - 1]), 'Routing path nodes #3')
-					t.notEqual(manager.get_nodes_for_routing_path(3), null, 'Routing path nodes #4')
-					t.notEqual(manager.get_nodes_for_routing_path(3), null, 'Routing path nodes #5')
-					t.notEqual(manager.get_nodes_for_routing_path(3), null, 'Routing path nodes #6')
-					t.notEqual(manager.get_nodes_for_routing_path(3), null, 'Routing path nodes #7')
-					t.notEqual(manager.get_nodes_for_routing_path(3), null, 'Routing path nodes #8')
-					t.equal(manager.get_nodes_for_routing_path(3), null, 'Routing path nodes #9')
+					manager.once('peer_warning', !->
+						t.pass('Peer warning generated #2')
 
-					manager.del_first_node_in_routing_path(routing_path_nodes[0])
+						routing_path_nodes	= manager.get_nodes_for_routing_path(3)
+						t.equal(routing_path_nodes.length, 3, 'Routing path nodes #1')
+						t.ok(manager.has_connected_node(routing_path_nodes[0]), 'Routing path nodes #2')
+						t.notOk(manager.has_connected_node(routing_path_nodes[* - 1]), 'Routing path nodes #3')
+						t.notEqual(manager.get_nodes_for_routing_path(3), null, 'Routing path nodes #4')
+						t.notEqual(manager.get_nodes_for_routing_path(3), null, 'Routing path nodes #5')
+						t.notEqual(manager.get_nodes_for_routing_path(3), null, 'Routing path nodes #6')
+						t.notEqual(manager.get_nodes_for_routing_path(3), null, 'Routing path nodes #7')
+						t.notEqual(manager.get_nodes_for_routing_path(3), null, 'Routing path nodes #8')
+						t.equal(manager.get_nodes_for_routing_path(3), null, 'Routing path nodes #9')
 
-					t.notEqual(manager.get_nodes_for_routing_path(3), null, 'Routing path nodes #10')
+						manager.del_first_node_in_routing_path(routing_path_nodes[0])
 
-					setTimeout (!->
-						t.equal(manager.get_aware_of_nodes(nodes[4]).length, 5, 'Get aware of nodes #6')
+						t.notEqual(manager.get_nodes_for_routing_path(3), null, 'Routing path nodes #10')
 
-						manager.destroy()
-						t.end()
-					), 500
+						setTimeout (!->
+							t.equal(manager.get_aware_of_nodes(nodes[4]).length, 5, 'Get aware of nodes #6')
+
+							manager.destroy()
+							t.end()
+						), 500
+					)
+					manager.set_aware_of_nodes(nodes[3], [nodes[10]])
 				)
-				manager.set_aware_of_nodes(nodes[3], [nodes[10]])
+				manager.set_aware_of_nodes(nodes[4], nodes.slice(20, 29))
 			)
 			manager.add_bootstrap_node(nodes[2], bootstrap_nodes[0])
 		)

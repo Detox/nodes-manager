@@ -1,7 +1,11 @@
 {
 	"name"            : "@detox/nodes-manager",
-	"description"     : "",
-	"keywords"        : [],
+	"description"     : "Nodes management used by core library",
+	"keywords"        : [
+		"detox",
+		"nodes",
+		"routing"
+	],
 	"version"         : "0.1.0",
 	"homepage"        : "https://github.com/Detox/nodes-manager",
 	"author"          : "Nazar Mokrynskyi <nazar@mokrynskyi.com>",

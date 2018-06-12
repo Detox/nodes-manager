@@ -188,16 +188,15 @@
           }
           if (this._aware_of_nodes.has(new_node_id) || this._aware_of_nodes.size < this._aware_of_nodes_limit) {
             this._aware_of_nodes.set(new_node_id, +new Date);
-            this['fire']('aware_of_nodes_count', this._aware_of_nodes.size);
           } else if (stale_aware_of_nodes.length) {
             stale_node_to_remove = pull_random_item_from_array(stale_aware_of_nodes);
             this._aware_of_nodes['delete'](stale_node_to_remove);
             this._aware_of_nodes.set(new_node_id, +new Date);
-            this['fire']('aware_of_nodes_count', this._aware_of_nodes.size);
           } else {
             break;
           }
         }
+        this['fire']('aware_of_nodes_count', this._aware_of_nodes.size);
       }
       /**
        * @param {!Uint8Array} for_node_id
