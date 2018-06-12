@@ -62,6 +62,10 @@
        */
       'add_bootstrap_node': function(node_id, bootstrap_node){
         var bootstrap_node_id;
+        if (this._bootstrap_nodes_ids.has(node_id)) {
+          this['fire']('peer_warning', node_id);
+          return;
+        }
         bootstrap_node_id = hex2array(bootstrap_node.split(':')[0]);
         this._bootstrap_nodes.set(bootstrap_node_id, bootstrap_node);
         this._bootstrap_nodes_ids.set(node_id, bootstrap_node_id);
@@ -132,9 +136,10 @@
         }
         for (i$ = 0; i$ < up_to_number_of_nodes; ++i$) {
           i = i$;
-          if (connected_nodes.length) {
-            results$.push(pull_random_item_from_array(connected_nodes));
+          if (!connected_nodes.length) {
+            break;
           }
+          results$.push(pull_random_item_from_array(connected_nodes));
         }
         return results$;
       }

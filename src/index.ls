@@ -22,7 +22,7 @@ function Wrapper (detox-utils, async-eventer)
 	 *
 	 * @return {!Manager}
 	 */
-	!function Manager (bootstrap_nodes, aware_of_nodes_limit = 1000, stale_aware_of_node_timeout = STALE_AWARE_OF_NODE_TIMEOUT) #TODO If there are not many timeouts, think about simplifying to plain arguments
+	!function Manager (bootstrap_nodes, aware_of_nodes_limit = 1000, stale_aware_of_node_timeout = STALE_AWARE_OF_NODE_TIMEOUT)
 		if !(@ instanceof Manager)
 			return new Manager(bootstrap_nodes, aware_of_nodes_limit, stale_aware_of_node_timeout)
 		async-eventer.call(@)
@@ -48,7 +48,6 @@ function Wrapper (detox-utils, async-eventer)
 				if date < super_stale_older_than
 					@_aware_of_nodes.delete(node_id)
 		)
-		# TODO
 
 	Manager:: =
 		/**
@@ -56,9 +55,11 @@ function Wrapper (detox-utils, async-eventer)
 		 * @param {string}		bootstrap_node
 		 */
 		'add_bootstrap_node' : (node_id, bootstrap_node) !->
+			if @_bootstrap_nodes_ids.has(node_id)
+				@'fire'('peer_warning', node_id)
+				return
 			bootstrap_node_id	= hex2array(bootstrap_node.split(':')[0])
 			@_bootstrap_nodes.set(bootstrap_node_id, bootstrap_node)
-			# TODO: Check if this happens for the first time, generate warning/error if not
 			@_bootstrap_nodes_ids.set(node_id, bootstrap_node_id)
 		/**
 		 * @return {!Array<string>}
@@ -119,8 +120,9 @@ function Wrapper (detox-utils, async-eventer)
 			if !connected_nodes.length
 				return null
 			for i from 0 til up_to_number_of_nodes
-				if connected_nodes.length
-					pull_random_item_from_array(connected_nodes)
+				if !connected_nodes.length
+					break
+				pull_random_item_from_array(connected_nodes)
 		/**
 		 * @param {!Uint8Array} node_id
 		 *
