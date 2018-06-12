@@ -17,7 +17,7 @@ function Wrapper (detox-utils, async-eventer)
 	 * @constructor
 	 *
 	 * @param {!Array<string>}	bootstrap_nodes				Array of strings in format `node_id:address:port`
-	 * @param {!Array<string>}	aware_of_nodes_limit		How many aware of nodes should be kept in memory
+	 * @param {number}			aware_of_nodes_limit		How many aware of nodes should be kept in memory
 	 * @param {number}			stale_aware_of_node_timeout
 	 *
 	 * @return {!Manager}
@@ -71,11 +71,11 @@ function Wrapper (detox-utils, async-eventer)
 		 * @return {!Array<!Uint8Array>}
 		 */
 		'get_candidates_for_disconnection' : (exclude_nodes) ->
-			exclude_nodes	= ArraySet(exclude_nodes)
-			candidates		= []
+			exclude_nodes_set	= ArraySet(exclude_nodes)
+			candidates			= []
 			@_connected_nodes.forEach (node_id) !~>
 				if !(
-					exclude_nodes.has(node_id)
+					exclude_nodes_set.has(node_id) ||
 					# Don't remove node that act as first node in routing path
 					@_used_first_nodes.has(node_id) ||
 					# Don't remove useful peers

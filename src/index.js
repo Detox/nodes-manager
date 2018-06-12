@@ -19,7 +19,7 @@
      * @constructor
      *
      * @param {!Array<string>}	bootstrap_nodes				Array of strings in format `node_id:address:port`
-     * @param {!Array<string>}	aware_of_nodes_limit		How many aware of nodes should be kept in memory
+     * @param {number}			aware_of_nodes_limit		How many aware of nodes should be kept in memory
      * @param {number}			stale_aware_of_node_timeout
      *
      * @return {!Manager}
@@ -78,11 +78,11 @@
        * @return {!Array<!Uint8Array>}
        */,
       'get_candidates_for_disconnection': function(exclude_nodes){
-        var candidates, this$ = this;
-        exclude_nodes = ArraySet(exclude_nodes);
+        var exclude_nodes_set, candidates, this$ = this;
+        exclude_nodes_set = ArraySet(exclude_nodes);
         candidates = [];
         this._connected_nodes.forEach(function(node_id){
-          if (!(exclude_nodes.has(node_id), this$._used_first_nodes.has(node_id) || this$._peers.has(node_id))) {
+          if (!(exclude_nodes_set.has(node_id) || this$._used_first_nodes.has(node_id) || this$._peers.has(node_id))) {
             candidates.push(node_id);
           }
         });
