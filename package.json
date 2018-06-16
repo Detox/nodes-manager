@@ -26,7 +26,7 @@
 		"async-eventer" : "^1.1.7"
 	},
 	"devDependencies" : {
-		"build-gc" : "^0.1.1",
+		"build-gc" : "^0.2.0",
 		"tape"     : "^4.9.1"
 	}
 }
