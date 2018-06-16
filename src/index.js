@@ -207,7 +207,7 @@
         var nodes, aware_of_nodes, i$, _, node, candidates, to$, this$ = this;
         nodes = [];
         aware_of_nodes = Array.from(this._aware_of_nodes.keys());
-        for (i$ = 0; i$ < 10; ++i$) {
+        for (i$ = 0; i$ < 7; ++i$) {
           _ = i$;
           if (!aware_of_nodes.length) {
             break;
@@ -217,27 +217,25 @@
             nodes.push(node);
           }
         }
-        if (nodes.length < 10) {
-          candidates = ArraySet();
-          this._peers.forEach(function(peer_peers, peer_id){
-            if (!are_arrays_equal(for_node_id, peer_id)) {
-              peer_peers.forEach(function(candidate){
-                if (!this$._peers.has(candidate)) {
-                  candidates.add(candidate);
-                }
-              });
-            }
-          });
-          candidates = Array.from(candidates);
-          for (i$ = 0, to$ = Math.min(5, 10 - nodes.length); i$ < to$; ++i$) {
-            _ = i$;
-            if (!candidates.length) {
-              break;
-            }
-            node = pull_random_item_from_array(candidates);
-            if (node) {
-              nodes.push(node);
-            }
+        candidates = ArraySet();
+        this._peers.forEach(function(peer_peers, peer_id){
+          if (!are_arrays_equal(for_node_id, peer_id)) {
+            peer_peers.forEach(function(candidate){
+              if (!this$._peers.has(candidate)) {
+                candidates.add(candidate);
+              }
+            });
+          }
+        });
+        candidates = Array.from(candidates);
+        for (i$ = 0, to$ = Math.min(5, 10 - nodes.length); i$ < to$; ++i$) {
+          _ = i$;
+          if (!candidates.length) {
+            break;
+          }
+          node = pull_random_item_from_array(candidates);
+          if (node) {
+            nodes.push(node);
           }
         }
         return nodes;

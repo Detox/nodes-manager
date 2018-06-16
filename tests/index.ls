@@ -66,7 +66,7 @@ test('Manager', (t) !->
 					manager.set_aware_of_nodes(nodes[4], [nodes[29]])
 
 					t.equal(manager.get_aware_of_nodes(nodes[4]).length, 10, 'Get aware of nodes #4')
-					t.equal(manager.get_aware_of_nodes(nodes[3]).length, 10, 'Get aware of nodes #5')
+					t.equal(manager.get_aware_of_nodes(nodes[3]).length, 7, 'Get aware of nodes #5')
 
 					t.notOk(manager.more_aware_of_nodes_needed(), 'More aware of nodes needed #2')
 
