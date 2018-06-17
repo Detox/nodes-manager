@@ -174,19 +174,23 @@ function Wrapper (detox-utils, async-eventer)
 		 * @return {!Array<!Uint8Array>}
 		 */
 		'get_aware_of_nodes' : (for_node_id) ->
+			exclude_nodes	= ArraySet([for_node_id])
+			if @_peers.has(for_node_id)
+				for node_id in Array.from(@_peers.get(for_node_id))
+					exclude_nodes.add(node_id)
 			nodes			= []
 			aware_of_nodes	= Array.from(@_aware_of_nodes.keys())
 			for _ from 0 til 7
 				if !aware_of_nodes.length
 					break
-				node	= pull_random_item_from_array(aware_of_nodes)
-				if node
-					nodes.push(node)
+				node_id	= pull_random_item_from_array(aware_of_nodes)
+				if node_id && !exclude_nodes.has(node_id)
+					nodes.push(node_id)
 			candidates	= ArraySet()
 			@_peers.forEach (peer_peers, peer_id) !~>
 				if !are_arrays_equal(for_node_id, peer_id)
 					peer_peers.forEach (candidate) !~>
-						if !@_peers.has(candidate)
+						if !exclude_nodes.has(candidate)
 							candidates.add(candidate)
 			candidates	= Array.from(candidates)
 			for _ from 0 til Math.min(5, 10 - nodes.length)

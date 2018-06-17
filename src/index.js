@@ -204,7 +204,14 @@
        * @return {!Array<!Uint8Array>}
        */,
       'get_aware_of_nodes': function(for_node_id){
-        var nodes, aware_of_nodes, i$, _, node, candidates, to$, this$ = this;
+        var exclude_nodes, i$, ref$, len$, node_id, nodes, aware_of_nodes, _, candidates, to$, node, this$ = this;
+        exclude_nodes = ArraySet([for_node_id]);
+        if (this._peers.has(for_node_id)) {
+          for (i$ = 0, len$ = (ref$ = Array.from(this._peers.get(for_node_id))).length; i$ < len$; ++i$) {
+            node_id = ref$[i$];
+            exclude_nodes.add(node_id);
+          }
+        }
         nodes = [];
         aware_of_nodes = Array.from(this._aware_of_nodes.keys());
         for (i$ = 0; i$ < 7; ++i$) {
@@ -212,16 +219,16 @@
           if (!aware_of_nodes.length) {
             break;
           }
-          node = pull_random_item_from_array(aware_of_nodes);
-          if (node) {
-            nodes.push(node);
+          node_id = pull_random_item_from_array(aware_of_nodes);
+          if (node_id && !exclude_nodes.has(node_id)) {
+            nodes.push(node_id);
           }
         }
         candidates = ArraySet();
         this._peers.forEach(function(peer_peers, peer_id){
           if (!are_arrays_equal(for_node_id, peer_id)) {
             peer_peers.forEach(function(candidate){
-              if (!this$._peers.has(candidate)) {
+              if (!exclude_nodes.has(candidate)) {
                 candidates.add(candidate);
               }
             });
