@@ -171,14 +171,22 @@
        * @param {!Array<!Uint8Array>}	nodes	IDs of nodes `peer_id` is aware of
        */,
       'set_aware_of_nodes': function(peer_id, nodes){
-        var peer_peers, i$, len$, new_node_id, stale_aware_of_nodes, stale_node_to_remove;
+        var peer_peers, peer_nodes_count, i$, len$, new_node_id, stale_aware_of_nodes, stale_node_to_remove;
+        if (nodes.length > 10) {
+          this['fire']('peer_error', peer_id);
+          return;
+        }
         peer_peers = this._peers.get(peer_id);
+        peer_nodes_count = 0;
         for (i$ = 0, len$ = nodes.length; i$ < len$; ++i$) {
           new_node_id = nodes[i$];
           if (peer_peers && peer_peers.has(new_node_id)) {
-            this['fire']('peer_warning', peer_id);
-            return;
+            ++peer_nodes_count;
           }
+        }
+        if (peer_nodes_count > 5) {
+          this['fire']('peer_error', peer_id);
+          return;
         }
         stale_aware_of_nodes = this._get_stale_aware_of_nodes();
         for (i$ = 0, len$ = nodes.length; i$ < len$; ++i$) {

@@ -148,12 +148,18 @@ function Wrapper (detox-utils, async-eventer)
 		 * @param {!Array<!Uint8Array>}	nodes	IDs of nodes `peer_id` is aware of
 		 */
 		'set_aware_of_nodes' : (peer_id, nodes) !->
-			peer_peers	= @_peers.get(peer_id)
+			if nodes.length > 10
+				@'fire'('peer_error', peer_id)
+				return
+			peer_peers			= @_peers.get(peer_id)
+			peer_nodes_count	= 0
 			for new_node_id in nodes
 				# Peer should not return own peers as aware of nodes
 				if peer_peers && peer_peers.has(new_node_id)
-					@'fire'('peer_warning', peer_id)
-					return
+					++peer_nodes_count
+			if peer_nodes_count > 5
+				@'fire'('peer_error', peer_id)
+				return
 			stale_aware_of_nodes	= @_get_stale_aware_of_nodes()
 			for new_node_id in nodes
 				# Ignore already connected nodes and own ID or if there are enough nodes already

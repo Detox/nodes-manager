@@ -51,9 +51,9 @@
             t.equal(manager.get_aware_of_nodes(nodes[4]).length, 10, 'Get aware of nodes #4');
             t.equal(manager.get_aware_of_nodes(nodes[3]).length, 7, 'Get aware of nodes #5');
             t.notOk(manager.more_aware_of_nodes_needed(), 'More aware of nodes needed #2');
-            manager.once('peer_warning', function(){
+            manager.once('peer_error', function(){
               var routing_path_nodes;
-              t.pass('Peer warning generated #2');
+              t.pass('Peer error generated #1');
               routing_path_nodes = manager.get_nodes_for_routing_path(3);
               t.equal(routing_path_nodes.length, 3, 'Routing path nodes #1');
               t.ok(manager.has_connected_node(routing_path_nodes[0]), 'Routing path nodes #2');
@@ -72,7 +72,7 @@
                 t.end();
               }, 500);
             });
-            manager.set_aware_of_nodes(nodes[3], [nodes[10]]);
+            manager.set_aware_of_nodes(nodes[3], [nodes[10], nodes[11], nodes[12], nodes[13], nodes[14], nodes[15]]);
           });
           manager.set_aware_of_nodes(nodes[4], nodes.slice(20, 29));
         });

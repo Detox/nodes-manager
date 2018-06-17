@@ -93,6 +93,11 @@ Event is fired when new direct connection with node is established or destroyed.
 Payload is a single argument `count` (`number`).
 Event is fired when number of nodes which current node is aware of changes.
 
+### Event: peer_error
+Payload consists of single `Uint8Array` argument `peer_id`.
+
+Event is fired to notify higher level about peer error, error is a strong indication of malicious node, communication must be stopped immediately.
+
 ### Event: peer_warning
 Payload consists of single `Uint8Array` argument `peer_id`.
 
