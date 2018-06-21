@@ -180,7 +180,8 @@ function Wrapper (detox-utils, async-eventer)
 		 * @return {!Array<!Uint8Array>}
 		 */
 		'get_aware_of_nodes' : (for_node_id) ->
-			exclude_nodes	= ArraySet([for_node_id])
+			exclude_nodes	= [for_node_id].concat(@_get_stale_aware_of_nodes())
+			exclude_nodes	= ArraySet(exclude_nodes)
 			if @_peers.has(for_node_id)
 				for node_id in Array.from(@_peers.get(for_node_id))
 					exclude_nodes.add(node_id)

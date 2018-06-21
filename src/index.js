@@ -213,7 +213,8 @@
        */,
       'get_aware_of_nodes': function(for_node_id){
         var exclude_nodes, i$, ref$, len$, node_id, nodes, aware_of_nodes, _, candidates, to$, node, this$ = this;
-        exclude_nodes = ArraySet([for_node_id]);
+        exclude_nodes = [for_node_id].concat(this._get_stale_aware_of_nodes());
+        exclude_nodes = ArraySet(exclude_nodes);
         if (this._peers.has(for_node_id)) {
           for (i$ = 0, len$ = (ref$ = Array.from(this._peers.get(for_node_id))).length; i$ < len$; ++i$) {
             node_id = ref$[i$];
